@@ -766,13 +766,28 @@ class Dialog : Gtk.Dialog
 				d_button_ok.activate();
 				return true;
 			}
-			else if ((event.keyval == Gdk.Key.Left || event.keyval == Gdk.Key.KP_Left))
+            if (event.keyval == Gdk.Key.Page_Up)
 			{
 				on_prev_commit_message_button_clicked ();
+                return true;
 			}
-			else if ((event.keyval == Gdk.Key.Right || event.keyval == Gdk.Key.KP_Right))
+			if (event.keyval == Gdk.Key.Page_Down)
 			{
 				on_next_commit_message_button_clicked ();
+                return true;
+			}
+        }
+		if ((mmask & event.state) == (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK))
+        {
+            if ((event.keyval == Gdk.Key.Left || event.keyval == Gdk.Key.KP_Left))
+			{
+				on_prev_commit_message_button_clicked ();
+                return false;
+			}
+			if ((event.keyval == Gdk.Key.Right || event.keyval == Gdk.Key.KP_Right))
+			{
+				on_next_commit_message_button_clicked ();
+                return false;
 			}
 		}
 
