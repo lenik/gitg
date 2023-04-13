@@ -76,6 +76,7 @@ class Paned : Gtk.Paned
 	public bool skip_hooks
 	{
 		get { return d_check_button_skip_hooks.active; }
+		set { d_check_button_skip_hooks.active = value; }
 	}
 
 	public Gtk.Button button_commit
@@ -109,6 +110,9 @@ class Paned : Gtk.Paned
 		                    this,
 		                    "position",
 		                    SettingsBindFlags.GET | SettingsBindFlags.SET);
+ 
+        // cmdline option --no-commit-hooks
+        skip_hooks = Gitg.Application.skip_hooks;
 	}
 
 	public Paned()
