@@ -109,6 +109,9 @@ class Paned : Gtk.Paned
 		                    this,
 		                    "position",
 		                    SettingsBindFlags.GET | SettingsBindFlags.SET);
+ 
+        // cmdline option --no-commit-hooks
+        skip_hooks = Gitg.Application.skip_hooks;
 	}
 
 	public Paned()

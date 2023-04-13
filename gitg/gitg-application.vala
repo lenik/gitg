@@ -31,6 +31,7 @@ public class Application : Gtk.Application
 	private static string activity;
 	private static bool no_wd = false;
 	private static bool standalone = false;
+	public static bool skip_hooks = false;
 	private static ApplicationCommandLine app_command_line;
 	private static bool init = false;
 
@@ -47,6 +48,8 @@ public class Application : Gtk.Application
 		 ref standalone, N_("Run gitg in standalone mode"), null},
 		{"init", 0, 0, OptionArg.NONE,
 		 ref init, N_("Put paths under git if needed"), null},
+        {"no-commit-hooks", 0, 0, OptionArg.NONE,
+		 ref skip_hooks, N_("Set default to skip commit hooks"), null},
 		{null}
 	};
 
