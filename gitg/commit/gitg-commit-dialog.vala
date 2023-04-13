@@ -183,7 +183,9 @@ class Dialog : Gtk.Dialog
 
 	public void reset_message()
 	{
-	   message = default_message;
+	   	// reuse message from previous commit.
+	   	if (default_message.length > 0)
+	   	   	message = default_message;
 	}
 
 	public void update_default_message()
