@@ -82,7 +82,7 @@ endforeach
 
 # c compiler flags
 common_flags = ['-DHAVE_CONFIG_H']
-warn_flags = []
+warn_flags = [ '-Wno-format-nonliteral', '-Wno-format-zero-length' ]
 
 if get_option('deprecations')
   warn_flags += [
