@@ -956,7 +956,7 @@ class Dialog : Gtk.Dialog
 							try {
 								file.delete_async.end (res);
 							} catch (Error e) {
-								warning ("Error deleting %S file: %s", PREPARE_COMMIT_MSG_FILENAME, e.message);
+								warning ("Error deleting %s file: %s", PREPARE_COMMIT_MSG_FILENAME, e.message);
 							}
 						});
 					}
