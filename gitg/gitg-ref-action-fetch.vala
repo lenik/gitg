@@ -20,7 +20,7 @@
 namespace Gitg
 {
 
-class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Object
+class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, GitgExt.FetchAvoidTags, Object
 {
 	// Do this to pull in config.h before glib.h (for gettext...)
 	private const string version = Gitg.Config.VERSION;
@@ -28,6 +28,7 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 	public GitgExt.Application? application { owned get; construct set; }
 	public GitgExt.RefActionInterface action_interface { get; construct set; }
 	public Gitg.Ref reference { get; construct set; }
+	public bool no_tags { get; construct set; }
 
 	private Gitg.Ref? d_remote_ref;
 	private Gitg.Remote? d_remote;
@@ -35,11 +36,14 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 
 	public RefActionFetch(GitgExt.Application        application,
 	                      GitgExt.RefActionInterface action_interface,
-	                      Gitg.Ref?                   reference, string? remote_name = null)
+	                      Gitg.Ref?                  reference,
+	                      string?                    remote_name = null,
+	                      bool                       no_tags = false)
 	{
 		Object(application:      application,
 		       action_interface: action_interface,
-		       reference:        reference);
+		       reference:        reference,
+		       no_tags:          no_tags);
 
 		if (reference != null)
 		{
@@ -80,7 +84,8 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 		{
 			if (d_remote != null)
 			{
-				return _("Fetch from %s").printf(remote_name);
+				var suffix = no_tags ? _(" (without tags)"): "";
+				return _("Fetch from %s%s").printf(remote_name, suffix);
 			}
 			else
 			{
@@ -91,7 +96,9 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 
 	public string description
 	{
-		owned get { return _("Fetch remote objects from %s").printf(remote_name); }
+		owned get {
+			return _("Fetch remote objects from %s (hold Shift to ignore tags)").printf(remote_name);
+		}
 	}
 
 	public bool available
@@ -104,7 +111,7 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 		var notification = new RemoteNotification(d_remote);
 		application.notifications.add(notification);
 
-		notification.text = _("Fetching from %s").printf(d_remote.get_url());
+		notification.text = _("Fetching from <a href='%s'>%s</a>").printf(d_remote.get_url(), d_remote.get_name());
 
 		var updates = new Gee.ArrayList<string>();
 
@@ -123,11 +130,14 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 
 		try
 		{
-			yield d_remote.fetch(null, null);
+			Ggit.RemoteDownloadTagsType? download_tags = null;
+			if (no_tags)
+				download_tags = Ggit.RemoteDownloadTagsType.NONE;
+			yield d_remote.fetch(null, null, download_tags);
 		}
 		catch (Error e)
 		{
-			notification.error(_("Failed to fetch from %s: %s").printf(d_remote.get_url(), e.message));
+			notification.error(_("Failed to fetch from <a href='%s'>%s</a>: <b>%s</b>").printf(d_remote.get_url(), d_remote.get_name(), e.message));
 			stderr.printf("Failed to fetch: %s\n", e.message);
 
 			return false;
@@ -140,7 +150,7 @@ class RefActionFetch : GitgExt.UIElement, GitgExt.Action, GitgExt.RefAction, Obj
 		if (updates.size == 0)
 		{
 			/* Translators: the %s will get replaced with the remote url, */
-			notification.success(_("Fetched from %s: everything is up to date").printf(d_remote.get_url()));
+			notification.success(_("Fetched from <a href='%s'>%s</a>: <b>everything is up to date</b>").printf(d_remote.get_url(), d_remote.get_name()));
 		}
 		else
 		{

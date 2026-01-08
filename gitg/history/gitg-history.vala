@@ -407,7 +407,7 @@ namespace GitgHistory
 
 		private void store_mainline(Ggit.Config? config, string mainline)
 		{
-			if (config != null && mainline.len() > 0)
+			if (config != null && mainline.length > 0)
 			{
 				try
 				{
@@ -698,7 +698,7 @@ namespace GitgHistory
 				return null;
 			}
 
-			return popup_menu_for_ref(reference);
+			return popup_menu_for_ref(reference, event);
 		}
 
 		private Gtk.Menu? on_commit_list_populate_menu(Gdk.EventButton? event)
@@ -772,12 +772,22 @@ namespace GitgHistory
 			                                                 commit));
 
 			add_commit_action(actions,
+			                  new Gitg.CommitActionCheckout(application,
+			                                                    af,
+			                                                    commit));
+
+			add_commit_action(actions,
 			                  new Gitg.CommitActionCreatePatch(application,
 			                                                   af,
 			                                                   commit));
 
 			add_commit_action(actions,
 			                  new Gitg.CommitActionCherryPick(application,
+			                                                  af,
+			                                                  commit));
+
+			add_commit_action(actions,
+			                  new Gitg.CommitActionPush(application,
 			                                                  af,
 			                                                  commit));
 
@@ -867,7 +877,7 @@ namespace GitgHistory
 			return populate_menu_for_commit(commit);
 		}
 
-		private Gtk.Menu? popup_menu_for_ref(Gitg.Ref reference)
+		private Gtk.Menu? popup_menu_for_ref(Gitg.Ref reference, Gdk.EventButton? event)
 		{
 			var actions = new Gee.LinkedList<GitgExt.RefAction?>();
 
@@ -878,6 +888,7 @@ namespace GitgHistory
 			});
 
 			add_ref_action(actions, new Gitg.RefActionCreateBranch(application, af, reference));
+			add_ref_action(actions, new Gitg.RefActionSetUpstreamBranch(application, af, reference));
 			add_ref_action(actions, new Gitg.RefActionCreateTag(application, af, reference));
 			add_ref_action(actions, new Gitg.RefActionCreatePatch(application, af, reference));
 			add_ref_action(actions, new Gitg.RefActionCheckout(application, af, reference));
@@ -885,7 +896,8 @@ namespace GitgHistory
 			add_ref_action(actions, new Gitg.RefActionDelete(application, af, reference));
 			add_ref_action(actions, new Gitg.RefActionCopyName(application, af, reference));
 
-			var fetch = new Gitg.RefActionFetch(application, af, reference);
+			bool shift_pressed = (event.state & Gdk.ModifierType.SHIFT_MASK) != 0;
+			var fetch = new Gitg.RefActionFetch(application, af, reference, null, shift_pressed);
 
 			if (fetch.available)
 			{
@@ -1017,7 +1029,7 @@ namespace GitgHistory
 			Gtk.ListBoxRow selection = null;
 			if (event != null)
 			{
-		        var y = d_main.refs_list.y_in_window((int)event.y, event.window);
+				var y = d_main.refs_list.y_in_window((int)event.y, event.window);
 				var row = d_main.refs_list.get_row_at_y(y);
 				selection = row;
 				d_main.refs_list.select_row(row);
@@ -1025,17 +1037,21 @@ namespace GitgHistory
 
 			var references = d_main.refs_list.selection;
 
-			if (references.is_empty || references.first() != references.last())
-			{
-				Gee.LinkedList<GitgExt.Action> actions = null;
-				if (selection != null && selection.get_type () == typeof(RefHeader)
-					&& (actions = ((RefHeader)selection).actions) != null && actions.size > 0) {
+			Gee.LinkedList<GitgExt.Action> actions = null;
+			if (selection != null && selection.get_type () == typeof(RefHeader)) {
+				if ((actions = ((RefHeader)selection).actions) != null && actions.size > 0) {
 					var menu = new Gtk.Menu();
 
 					foreach (var ac in actions)
 					{
 						if (ac != null)
 						{
+							if (ac is GitgExt.FetchAvoidTags)
+							{
+								var fat = ac as GitgExt.FetchAvoidTags;
+								bool shift_pressed = (event.state & Gdk.ModifierType.SHIFT_MASK) != 0;
+								fat.no_tags = shift_pressed;
+							}
 							ac.populate_menu(menu);
 						}
 						else
@@ -1051,9 +1067,11 @@ namespace GitgHistory
 				} else {
 					return null;
 				}
+			} else if (!references.is_empty && references.first() == references.last()) {
+				return popup_menu_for_ref(references.first(), event);
+			} else {
+				return null;
 			}
-
-			return popup_menu_for_ref(references.first());
 		}
 
 		private Ggit.OId? id_for_ref(Ggit.Ref r)
@@ -1063,16 +1081,16 @@ namespace GitgHistory
 			try
 			{
 				var resolved = r.resolve();
+				id = resolved.get_target();
 
 				if (resolved.is_tag())
 				{
-					var t = application.repository.lookup<Ggit.Tag>(resolved.get_target());
-
-					id = t.get_target_id();
-				}
-				else
-				{
-					id = resolved.get_target();
+					try
+					{
+						var t = application.repository.lookup<Ggit.Tag>(id);
+						id = t.get_target_id();
+					}
+					catch {}
 				}
 			}
 			catch {}

@@ -5,7 +5,7 @@ desktop = 'org.gnome.gitg.desktop'
 desktop_config = configuration_data()
 desktop_config.set('icon', application_id)
 desktop_config.set('binary', gitg_name)
-i18n.merge_file(
+desktop_file = i18n.merge_file(
   type: 'desktop',
   input: configure_file(
     input: desktop + '.in.in',
@@ -17,6 +17,17 @@ i18n.merge_file(
   install: true,
   install_dir: join_paths(gitg_datadir, 'applications'),
 )
+
+desktop_file_validate = find_program('desktop-file-validate', required: false)
+if desktop_file_validate.found()
+  test(
+    'validate-desktop',
+    desktop_file_validate,
+    args: [
+      desktop_file.full_path()
+    ]
+  )
+endif
 
 schema_conf = configuration_data()
 schema_conf.set('GETTEXT_PACKAGE', gitg_gettext)
@@ -36,22 +47,31 @@ configure_file(
   install_dir: join_paths(gitg_datadir, 'glib-2.0', 'schemas'),
 )
 
-appdata = 'org.gnome.gitg.appdata.xml'
-appdata_config = configuration_data()
-appdata_config.set('app-id', application_id)
-appdata_config.set('gettext', gitg_name)
-i18n.merge_file(
+metainfo = 'org.gnome.gitg.metainfo.xml'
+metainfo_config = configuration_data()
+metainfo_config.set('app-id', application_id)
+metainfo_config.set('gettext', gitg_name)
+metainfo_file = i18n.merge_file(
   type: 'xml',
   input: configure_file(
-    input: appdata + '.in.in',
-    output: appdata + '.in',
-    configuration: appdata_config
+    input: metainfo + '.in.in',
+    output: metainfo + '.in',
+    configuration: metainfo_config
   ),
-  output: '@0@.appdata.xml'.format(application_id),
+  output: '@0@.metainfo.xml'.format(application_id),
   po_dir: po_dir,
   install: true,
   install_dir: join_paths(gitg_datadir, 'metainfo'),
 )
+appstreamcli = find_program('appstreamcli', required: false)
+if appstreamcli.found()
+  test(
+    'validate-metainfo', appstreamcli,
+    args: [
+      'validate', '--no-net', '--explain', metainfo_file.full_path()
+    ]
+  )
+endif
 
 install_man(
   'gitg.1',
@@ -64,3 +84,7 @@ if enable_glade_catalog
     install_dir: join_paths(gitg_datadir, 'glade', 'catalogs'),
   )
 endif
+
+install_subdir('styles',
+    install_dir: gitg_pkgdatadir,
+)

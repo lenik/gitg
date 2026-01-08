@@ -12,8 +12,9 @@ common_deps = [
   gio_dep,
   glib_dep,
   gtk_dep,
+  hdy_dep,
+  gtksourceview_dep,
   libgit2_glib_dep,
-  libdazzle_dep,
   gpgme_dependency,
 ]
 

@@ -2,7 +2,6 @@
     "app-id": "org.gnome.gitgDevel",
     "runtime": "org.gnome.Platform",
     "runtime-version": "master",
-    "branch": "master",
     "sdk": "org.gnome.Sdk",
     "command": "gitgDevel",
     "tags": [
@@ -41,16 +40,20 @@
     "modules": [
         {
             "name": "libssh2",
-            "buildsystem": "cmake",
+            "buildsystem" : "cmake-ninja",
             "config-opts": [
+                "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
                 "-DCMAKE_INSTALL_LIBDIR:PATH=/app/lib",
                 "-DBUILD_SHARED_LIBS:BOOL=ON"
+            ],
+            "cleanup" : [
+                 "/share/doc"
             ],
             "sources": [
                 {
                     "type": "git",
                     "url": "https://github.com/libssh2/libssh2.git",
-                    "branch": "libssh2-1.10.0"
+                    "branch": "libssh2-1.11.1"
                 }
             ]
         },
@@ -143,24 +146,6 @@
             ]
         },
         {
-            "name": "libdazzle",
-            "config-opts": [
-                "--libdir=/app/lib",
-                "--buildtype=debugoptimized"
-            ],
-            "buildsystem": "meson",
-            "builddir": true,
-            "cleanup": [
-                "/bin"
-            ],
-            "sources": [
-                {
-                    "type": "git",
-                    "url": "https://gitlab.gnome.org/GNOME/libdazzle.git"
-                }
-            ]
-        },
-        {
             "name": "git",
             "make-args": [
                 "NO_TCLTK=1",
@@ -173,8 +158,8 @@
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.45.2.tar.xz",
-                    "sha256": "51bfe87eb1c02fed1484051875365eeab229831d30d0cec5d89a14f9e40e9adb"
+                    "url": "https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.49.0.tar.xz",
+                    "sha256": "618190cf590b7e9f6c11f91f23b1d267cd98c3ab33b850416d8758f8b5a85628"
                 }
             ]
         },
